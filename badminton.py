@@ -341,13 +341,32 @@ if uploaded_file:
 
         # Plot 2: Win % by Rally Category
         fig_win_cat, ax_win_cat = plt.subplots(figsize=(8, 5))
+        
         # Group to get percentages and absolute counts
         win_cat_counts = rdf.groupby(['Cat', 'Winner']).size().unstack(fill_value=0)
+        
+        # Safety check: Ensure both columns exist even if a player scored 0 in a category
+        for col in ['Opponent', 'Player']:
+            if col not in win_cat_counts.columns:
+                win_cat_counts[col] = 0
+                
+        # STRICT COLOR MAPPING: Force Opponent first (Navy: #2C3E50), Player second (Gold: #FFA600)
+        win_cat_counts = win_cat_counts[['Opponent', 'Player']]
+        
         win_cat_totals = win_cat_counts.sum(axis=1)
         win_cat_props = win_cat_counts.div(win_cat_totals, axis=0).mul(100)
         win_cat_props = win_cat_props.reindex(['Short', 'Mid', 'Long'])
         
-        ax_p = win_cat_props.plot(kind='bar', stacked=True, ax=ax_win_cat, color=['#2C3E50', '#FFA600'])
+        # Rename the columns to actual player names for the legend
+        win_cat_props.columns = [o_name, p_name]
+        win_cat_counts.columns = [o_name, p_name]
+        
+        ax_p = win_cat_props.plot(
+            kind='bar', 
+            stacked=True, 
+            ax=ax_win_cat, 
+            color=['#2C3E50', '#FFA600'] 
+        )
         
         # Add Data Labels to Stacked Bars: 70% (20)
         for i, (idx, row) in enumerate(win_cat_props.iterrows()):
@@ -363,7 +382,11 @@ if uploaded_file:
 
         ax_win_cat.set_title("Win % by Rally Category", fontweight='bold')
         ax_win_cat.set_ylabel("Win Percentage (%)")
-        ax_win_cat.legend(title="Won By:", labels=[o_name, p_name], loc='upper right')
+        
+        # THE FIX: Explicitly set the x-axis label to overwrite "Cat"
+        ax_win_cat.set_xlabel("Rally Category") 
+        
+        ax_win_cat.legend(title="Won By:", loc='upper right')
         plt.xticks(rotation=0)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
