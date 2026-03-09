@@ -251,22 +251,26 @@ if uploaded_file:
         serve_plot_data = serve_counts.merge(serve_totals, on='Server')
         serve_plot_data['pct'] = (serve_plot_data['counts'] / serve_plot_data['totals']) * 100
 
-        # MAPPING UPDATE: Replace 'Player' and 'Opponent' with Actual Names for X-Axis
+        # MAPPING UPDATE: Map both Server AND Winner to the actual player names
         serve_plot_data['Server'] = serve_plot_data['Server'].map({'Player': p_name, 'Opponent': o_name})
+        serve_plot_data['Winner'] = serve_plot_data['Winner'].map({'Player': p_name, 'Opponent': o_name})
         serve_totals['Server'] = serve_totals['Server'].map({'Player': p_name, 'Opponent': o_name})
         
-        # Explicitly define the order to render the bars (Home Player first, then Opponent)
+        # Explicitly define the order to render the bars
         server_order = [p_name, o_name]
+        
+        # STRICT COLOR MAPPING: Lock specific names to specific hex codes
+        color_map = {p_name: '#FFA600', o_name: '#2C3E50'}
 
         sns.barplot(
             data=serve_plot_data, 
             x='Server', 
             y='pct', 
             hue='Winner', 
-            hue_order=['Opponent', 'Player'],
+            hue_order=[o_name, p_name], # Sets the order they appear in the legend
             order=server_order,
             ax=ax_serve, 
-            palette=['#2C3E50', '#FFA600']
+            palette=color_map # Applies the strict color map dictionary
         )
         
         # Add Data Labels: 70% (20)
@@ -275,23 +279,26 @@ if uploaded_file:
             if height > 0:
                 # Use the x-coordinate of the bar to find which Server index it belongs to
                 idx = int(round(p.get_x() + p.get_width() / 2.0))
-                server_name = server_order[idx]
                 
-                # Retrieve the absolute total for this specific server
-                total = serve_totals[serve_totals['Server'] == server_name]['totals'].values[0]
-                count = int(round((height / 100) * total))
-                
-                ax_serve.text(p.get_x() + p.get_width()/2., height / 2,
-                            f'{height:.0f}% ({count})', 
-                            ha='center', va='center', color='white', fontweight='bold', fontsize=9)
+                # Safety check to prevent index errors
+                if 0 <= idx < len(server_order):
+                    server_name = server_order[idx]
+                    
+                    # Retrieve the absolute total for this specific server
+                    total = serve_totals[serve_totals['Server'] == server_name]['totals'].values[0]
+                    count = int(round((height / 100) * total))
+                    
+                    ax_serve.text(p.get_x() + p.get_width()/2., height / 2,
+                                f'{height:.0f}% ({count})', 
+                                ha='center', va='center', color='white', fontweight='bold', fontsize=9)
 
         ax_serve.set_title("Serve Outcome Breakdown", fontsize=14)
-        ax_serve.set_xlabel("")  # Hide "Server" text on x-axis since the names are self-explanatory
+        ax_serve.set_xlabel("")  
         ax_serve.set_ylabel("Percentage of Points Won (%)")
         ax_serve.set_ylim(0, 110)
         
-        # Ensure labels match the hue_order mapping above
-        ax_serve.legend(title="Won By:", labels=[o_name, p_name])
+        # Removed the manual 'labels' override so Seaborn reads the names naturally from the DataFrame
+        ax_serve.legend(title="Won By:", loc='upper right')
         
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
             plt.savefig(tmp.name, bbox_inches='tight', dpi=150)
