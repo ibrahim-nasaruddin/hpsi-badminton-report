@@ -158,9 +158,10 @@ if uploaded_file:
         
         p_sets = sum(1 for s in final_scores if int(s.split('-')[0]) > int(s.split('-')[1]))
         match_winner = p_name if p_sets > (len(final_scores)/2) else o_name
+        match_vs = f"{p_name} vs {o_name}"
 
         summary_table = [
-            ["Date", str(date_str)], ["Event", event], ["Round", round_m],
+            ["Date", str(date_str)], ["Event", event], ["Round", round_m], ["Match", match_vs], 
             ["Venue", venue], ["Winner", match_winner], ["Final Score", ", ".join(final_scores)],
             ["Duration", duration_str]
         ]
