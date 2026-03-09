@@ -228,13 +228,19 @@ if uploaded_file:
             o_wins = len(subset[subset['Winner'] == 'Opponent'])
             p_pct = (p_wins / total) * 100
             o_pct = (o_wins / total) * 100
-            return f"{side_name} Serves: {total} -- {p_name} won {p_wins} ({p_pct:.0f}%), {o_name} won {o_wins} ({o_pct:.0f}%)"
+            
+            # Formatted multi-line string with bullet points
+            return (f"{side_name} Serves: {total}\n"
+                    f"• {p_pct:.0f}% ({p_wins}) won by {p_name}\n"
+                    f"• {o_pct:.0f}% ({o_wins}) won by {o_name}")
 
+        # Update multi_cell height from 8 to 5 to accommodate line breaks neatly
         pdf.set_font("Arial", 'B', 10)
         pdf.set_x(10) 
-        pdf.multi_cell(190, 8, get_serve_summary_text("Player", p_name))
+        pdf.multi_cell(190, 6, get_serve_summary_text("Player", p_name))
+        pdf.ln(3) # Small gap between the two summaries
         pdf.set_x(10)
-        pdf.multi_cell(190, 8, get_serve_summary_text("Opponent", o_name))
+        pdf.multi_cell(190, 6, get_serve_summary_text("Opponent", o_name))
         pdf.ln(5)
 
         # Serve Outcome Breakdown Plot
@@ -245,16 +251,23 @@ if uploaded_file:
         serve_plot_data = serve_counts.merge(serve_totals, on='Server')
         serve_plot_data['pct'] = (serve_plot_data['counts'] / serve_plot_data['totals']) * 100
 
-        sns.barplot(data=serve_plot_data, x='Server', y='pct', hue='Winner', ax=ax_serve, palette=['#2C3E50', '#FFA600'])
+        # Enforce hue_order so Opponent is ALWAYS Navy (#2C3E50) and Player is ALWAYS Gold (#FFA600)
+        sns.barplot(
+            data=serve_plot_data, 
+            x='Server', 
+            y='pct', 
+            hue='Winner', 
+            hue_order=['Opponent', 'Player'],
+            ax=ax_serve, 
+            palette=['#2C3E50', '#FFA600']
+        )
         
         # Add Data Labels: 70% (20)
         for p in ax_serve.patches:
             height = p.get_height()
             if height > 0:
                 # Find the corresponding count for this bar
-                # Matplotlib bars are indexed by their order in the hue
                 idx = int(p.get_x() + 0.5) # Server index
-                # We calculate count based on height and total
                 total = serve_totals.iloc[idx]['totals']
                 count = int(round((height / 100) * total))
                 ax_serve.text(p.get_x() + p.get_width()/2., height / 2,
@@ -264,6 +277,8 @@ if uploaded_file:
         ax_serve.set_title("Serve Outcome Breakdown", fontsize=14)
         ax_serve.set_ylabel("Percentage of Points Won (%)")
         ax_serve.set_ylim(0, 110)
+        
+        # Ensure labels match the hue_order mapping above
         ax_serve.legend(title="Won By:", labels=[o_name, p_name])
         
         with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
