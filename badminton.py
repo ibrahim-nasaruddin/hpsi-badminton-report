@@ -13,13 +13,18 @@ st.set_page_config(page_title="HPSI- Badminton PDF Report", layout="wide")
 
 # --- PDF CLASS DEFINITION ---
 class BadmintonReport(FPDF):
+    def __init__(self, custom_title, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.custom_title = custom_title
+
     def header(self):
         if self.page_no() == 1:
             self.set_fill_color(44, 62, 80)
             self.rect(0, 0, 210, 40, 'F')
             self.set_text_color(255, 255, 255)
-            self.set_font("Arial", 'B', 20)
-            self.cell(0, 20, "Post-Match Badminton Report", ln=True, align='C')
+            # Reduced font size from 20 to 14 to fit the longer dynamic text
+            self.set_font("Arial", 'B', 14) 
+            self.cell(0, 20, self.custom_title, ln=True, align='C')
             self.set_font("Arial", size=10)
             self.cell(0, 5, f"Prepared on: {datetime.now().strftime('%d-%m-%Y')}", ln=True, align='C')
             self.ln(20)
@@ -45,7 +50,6 @@ class BadmintonReport(FPDF):
             self.ln()
         self.ln(5)
 
-# --- ANALYTICS ENGINE ---
 # --- ANALYTICS ENGINE ---
 def analyze_match(df, p_name, o_name):
     df['Name'] = df['Name'].str.replace(r" \(\d+\)", "", regex=True)
@@ -146,7 +150,12 @@ if uploaded_file:
     rdf = analyze_match(raw_df, p_name, o_name)
     
     if st.button("Generate Full PDF Report"):
-        pdf = BadmintonReport()
+        # Combine the variables into the dynamic title string
+        date_formatted = date_str.strftime("%d %b %Y")
+        dynamic_title = f"{date_formatted} | {event} | {round_m} | {p_name} vs {o_name}"
+        
+        # Pass the custom title into the newly updated class
+        pdf = BadmintonReport(custom_title=dynamic_title)
         pdf.set_auto_page_break(auto=True, margin=15)
         pdf.add_page()
 
