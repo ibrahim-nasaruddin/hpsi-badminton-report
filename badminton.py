@@ -229,10 +229,10 @@ if uploaded_file:
             p_pct = (p_wins / total) * 100
             o_pct = (o_wins / total) * 100
             
-            # Formatted multi-line string with bullet points
+            # REPLACED '•' with '-' to fix the FPDF Unicode Encoding Error
             return (f"{side_name} Serves: {total}\n"
-                    f"• {p_pct:.0f}% ({p_wins}) won by {p_name}\n"
-                    f"• {o_pct:.0f}% ({o_wins}) won by {o_name}")
+                    f"- {p_pct:.0f}% ({p_wins}) won by {p_name}\n"
+                    f"- {o_pct:.0f}% ({o_wins}) won by {o_name}")
 
         pdf.set_font("Arial", 'B', 10)
         pdf.set_x(10) 
