@@ -234,30 +234,37 @@ if uploaded_file:
                     f"• {p_pct:.0f}% ({p_wins}) won by {p_name}\n"
                     f"• {o_pct:.0f}% ({o_wins}) won by {o_name}")
 
-        # Update multi_cell height from 8 to 5 to accommodate line breaks neatly
         pdf.set_font("Arial", 'B', 10)
         pdf.set_x(10) 
         pdf.multi_cell(190, 6, get_serve_summary_text("Player", p_name))
-        pdf.ln(3) # Small gap between the two summaries
+        pdf.ln(3)
         pdf.set_x(10)
         pdf.multi_cell(190, 6, get_serve_summary_text("Opponent", o_name))
         pdf.ln(5)
 
         # Serve Outcome Breakdown Plot
         fig_serve, ax_serve = plt.subplots(figsize=(8, 5))
+        
         # Group data to get counts and percentages
         serve_counts = rdf.groupby(['Server', 'Winner']).size().reset_index(name='counts')
         serve_totals = rdf.groupby('Server').size().reset_index(name='totals')
         serve_plot_data = serve_counts.merge(serve_totals, on='Server')
         serve_plot_data['pct'] = (serve_plot_data['counts'] / serve_plot_data['totals']) * 100
 
-        # Enforce hue_order so Opponent is ALWAYS Navy (#2C3E50) and Player is ALWAYS Gold (#FFA600)
+        # MAPPING UPDATE: Replace 'Player' and 'Opponent' with Actual Names for X-Axis
+        serve_plot_data['Server'] = serve_plot_data['Server'].map({'Player': p_name, 'Opponent': o_name})
+        serve_totals['Server'] = serve_totals['Server'].map({'Player': p_name, 'Opponent': o_name})
+        
+        # Explicitly define the order to render the bars (Home Player first, then Opponent)
+        server_order = [p_name, o_name]
+
         sns.barplot(
             data=serve_plot_data, 
             x='Server', 
             y='pct', 
             hue='Winner', 
             hue_order=['Opponent', 'Player'],
+            order=server_order,
             ax=ax_serve, 
             palette=['#2C3E50', '#FFA600']
         )
@@ -266,15 +273,20 @@ if uploaded_file:
         for p in ax_serve.patches:
             height = p.get_height()
             if height > 0:
-                # Find the corresponding count for this bar
-                idx = int(p.get_x() + 0.5) # Server index
-                total = serve_totals.iloc[idx]['totals']
+                # Use the x-coordinate of the bar to find which Server index it belongs to
+                idx = int(round(p.get_x() + p.get_width() / 2.0))
+                server_name = server_order[idx]
+                
+                # Retrieve the absolute total for this specific server
+                total = serve_totals[serve_totals['Server'] == server_name]['totals'].values[0]
                 count = int(round((height / 100) * total))
+                
                 ax_serve.text(p.get_x() + p.get_width()/2., height / 2,
                             f'{height:.0f}% ({count})', 
                             ha='center', va='center', color='white', fontweight='bold', fontsize=9)
 
         ax_serve.set_title("Serve Outcome Breakdown", fontsize=14)
+        ax_serve.set_xlabel("")  # Hide "Server" text on x-axis since the names are self-explanatory
         ax_serve.set_ylabel("Percentage of Points Won (%)")
         ax_serve.set_ylim(0, 110)
         
