@@ -58,19 +58,39 @@ class BadmintonReport(FPDF):
         self.ln(5)
 
     def quick_table(self, header, data, col_widths):
-        self.set_font("Arial", 'B', 10)
+        base_font_size = 10
+        
+        # --- Print Headers ---
+        self.set_font("Arial", 'B', base_font_size)
         self.set_fill_color(230, 230, 230)
         for i, h in enumerate(header):
-            self.cell(col_widths[i], 7, h, border=1, fill=True, align='C')
+            self.cell(col_widths[i], 7, str(h), border=1, fill=True, align='C')
         self.ln()
-        self.set_font("Arial", size=10)
+        
+        # --- Print Data Rows ---
         self.set_text_color(0, 0, 0)
         for row in data:
             for i, item in enumerate(row):
-                self.cell(col_widths[i], 7, str(item), border=1, align='C')
+                text = str(item)
+                cell_width = col_widths[i]
+                
+                # Auto-shrink logic for table cells
+                current_font_size = base_font_size
+                self.set_font("Arial", size=current_font_size)
+                
+                # If text is wider than the cell (minus 2mm for padding), shrink it
+                while self.get_string_width(text) > (cell_width - 2) and current_font_size > 5:
+                    current_font_size -= 0.5
+                    self.set_font("Arial", size=current_font_size)
+                
+                # Print the cell with the adjusted font size
+                self.cell(cell_width, 7, text, border=1, align='C')
+                
+                # Reset back to base font size for the next cell
+                self.set_font("Arial", size=base_font_size)
             self.ln()
         self.ln(5)
-
+        
 # --- ANALYTICS ENGINE ---
 def analyze_match(df, p_name, o_name):
     df['Name'] = df['Name'].str.replace(r" \(\d+\)", "", regex=True)
