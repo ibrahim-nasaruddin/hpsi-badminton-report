@@ -25,7 +25,7 @@ class BadmintonReport(FPDF):
             self.rect(0, 0, 210, 40, 'F')
             
             self.set_text_color(255, 255, 255)
-            self.set_font("Arial", 'B', 14) 
+            self.set_font("Arial", 'B', 16) 
             
             # Print Line 1 and Line 2 stacked on top of each other
             self.cell(0, 10, self.title_line1, ln=True, align='C')
