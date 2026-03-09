@@ -23,33 +23,47 @@ class BadmintonReport(FPDF):
             # Draw dark background
             self.set_fill_color(44, 62, 80)
             self.rect(0, 0, 210, 40, 'F')
-            
             self.set_text_color(255, 255, 255)
-            self.set_font("Arial", 'B', 16) 
             
-            # Print Line 1 and Line 2 stacked on top of each other
+            # Safe width for A4 page (210mm total - 10mm left/right margins)
+            max_width = 190 
+            
+            # --- AUTO-FIT LINE 1 ---
+            font_size_1 = 15
+            self.set_font("Arial", 'B', font_size_1)
+            # Shrink font size by 0.5 until the string width fits inside max_width
+            while self.get_string_width(self.title_line1) > max_width and font_size_1 > 6:
+                font_size_1 -= 0.5
+                self.set_font("Arial", 'B', font_size_1)
             self.cell(0, 10, self.title_line1, ln=True, align='C')
+            
+            # --- AUTO-FIT LINE 2 ---
+            font_size_2 = 15
+            self.set_font("Arial", 'B', font_size_2)
+            while self.get_string_width(self.title_line2) > max_width and font_size_2 > 6:
+                font_size_2 -= 0.5
+                self.set_font("Arial", 'B', font_size_2)
             self.cell(0, 10, self.title_line2, ln=True, align='C')
             
             # Print the prepared date
-            self.set_font("Arial", size=10)
+            self.set_font("Arial", size=11)
             self.cell(0, 5, f"Prepared on: {datetime.now().strftime('%d-%m-%Y')}", ln=True, align='C')
             self.ln(20)
 
     def section_title(self, title):
-        self.set_font("Arial", 'B', 14)
+        self.set_font("Arial", 'B', 15)
         self.set_text_color(44, 62, 80)
         self.cell(0, 10, title.upper(), ln=True)
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(5)
 
     def quick_table(self, header, data, col_widths):
-        self.set_font("Arial", 'B', 9)
+        self.set_font("Arial", 'B', 10)
         self.set_fill_color(230, 230, 230)
         for i, h in enumerate(header):
             self.cell(col_widths[i], 7, h, border=1, fill=True, align='C')
         self.ln()
-        self.set_font("Arial", size=9)
+        self.set_font("Arial", size=10)
         self.set_text_color(0, 0, 0)
         for row in data:
             for i, item in enumerate(row):
