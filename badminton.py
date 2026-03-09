@@ -431,7 +431,7 @@ if uploaded_file:
                     ["Work:Rest Ratio (1:X)", f"1 : {stats_data['Ratio'].min():.1f}", f"1 : {stats_data['Ratio'].max():.1f}", f"1 : {stats_data['Ratio'].mean():.1f}"]
                 ]
                 pdf.set_font("Arial", 'B', 11)
-                pdf.cell(0, 10, f"Load Statistics (Active Play Only) - {clean_set_title}", ln=True)
+                pdf.cell(0, 10, f"Load Statistics (Rest Intervals Excluded) - {clean_set_title}", ln=True)
                 pdf.quick_table(["Metric", "Max (Intense)", "Min (Intense)", "Mean"], load_rows, [50, 35, 35, 30])
             
             # --- B. POINT PROGRESSION PLOT ---
