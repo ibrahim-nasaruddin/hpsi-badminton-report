@@ -46,6 +46,7 @@ class BadmintonReport(FPDF):
         self.ln(5)
 
 # --- ANALYTICS ENGINE ---
+# --- ANALYTICS ENGINE ---
 def analyze_match(df, p_name, o_name):
     df['Name'] = df['Name'].str.replace(r" \(\d+\)", "", regex=True)
     relevant = ["Player Serve", "Opponent Serve", "End Rally"]
@@ -81,6 +82,7 @@ def analyze_match(df, p_name, o_name):
             after_end = df.iloc[end_row_idx+1:]
             next_serve_search = after_end[after_end['Name'].str.contains("Serve", na=False)]
             
+            # WINNER INFERENCE LOGIC
             if not next_serve_search.empty:
                 next_serve_name = next_serve_search.iloc[0]['Name']
                 next_server_side = "Player" if "Player" in next_serve_name else "Opponent"
@@ -90,7 +92,14 @@ def analyze_match(df, p_name, o_name):
                 else:
                     winner = "Opponent" if server_side == "Player" else "Player"
             else:
-                winner = server_side 
+                # THE FIX: If it's the absolute final rally of the match (no next serve), 
+                # the winner is the player who is currently leading / on match point.
+                if current_p_score > current_o_score:
+                    winner = "Player"
+                elif current_o_score > current_p_score:
+                    winner = "Opponent"
+                else:
+                    winner = server_side 
 
             score_diff = abs(current_p_score - current_o_score)
             is_pressure = (score_diff <= 1) or (current_p_score >= 20) or (current_o_score >= 20)
