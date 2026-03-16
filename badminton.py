@@ -243,7 +243,6 @@ if uploaded_file:
         pdf.quick_table(["Metric", "Value"], overall_table, [80, 60])
 
         # --- 3. PLAYER MATCH SUMMARY ---
-        pdf.add_page()
         pdf.section_title("Player Match Summary")
         
         def get_p_stats(side):
@@ -492,7 +491,7 @@ if uploaded_file:
                 ]
                 pdf.set_font("Arial", 'B', 11)
                 pdf.cell(0, 10, f"Load Statistics (Rest Intervals Excluded) - {clean_set_title}", ln=True)
-                pdf.quick_table(["Metric", "Max (Intense)", "Min (Intense)", "Mean"], load_rows, [50, 35, 35, 30])
+                pdf.quick_table(["Metric", "Max", "Min", "Mean"], load_rows, [50, 35, 35, 30])
             
             # --- B. POINT PROGRESSION PLOT ---
             # Normalize timestamps so each set starts at 0:00
