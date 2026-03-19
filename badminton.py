@@ -51,6 +51,7 @@ class BadmintonReport(FPDF):
             self.ln(20)
 
     def section_title(self, title):
+        self.set_x(10)
         self.set_font("Arial", 'B', 15)
         self.set_text_color(44, 62, 80)
         self.cell(0, 10, title.upper(), ln=True)
@@ -554,6 +555,8 @@ if uploaded_file:
         pdf.quick_table(["No.", "Set #", "Rally #", "W:R Ratio", "Work (s)", "Rest (s)", "Score Before"], toughest_table_data, [10, 25, 25, 30, 25, 25, 50])
         pdf.set_font("Arial", 'I', 9)
         pdf.multi_cell(0, 5, "Note: A larger W:R ratio represents a higher intensity rally (more work per unit of rest).")
+
+        pdf.ln(10)
 
         # --- 7. FINAL METHODOLOGY & NOTES ---
         pdf.section_title("NOTES: Methodology & Data Assumptions")
