@@ -51,6 +51,7 @@ class BadmintonReport(FPDF):
             self.ln(20)
 
     def section_title(self, title):
+        self.set_x(10)
         self.set_font("Arial", 'B', 15)
         self.set_text_color(44, 62, 80)
         self.cell(0, 10, title.upper(), ln=True)
@@ -137,7 +138,7 @@ def analyze_match(df, p_name, o_name):
                 else:
                     winner = "Opponent" if server_side == "Player" else "Player"
             else:
-                # THE FIX: If it's the absolute final rally of the match (no next serve), 
+                # If it's the absolute final rally of the match (no next serve), 
                 # the winner is the player who is currently leading / on match point.
                 if current_p_score > current_o_score:
                     winner = "Player"
@@ -168,12 +169,12 @@ def analyze_match(df, p_name, o_name):
     
     rdf = pd.DataFrame(rallies)
     rdf['Rest'] = (rdf.groupby('Set')['Start_Pos'].shift(-1) - rdf['End_Pos']) / 1000
-    rdf['Ratio'] = rdf['Rest'] / rdf['Duration'] 
+    rdf['Ratio'] = rdf['Duration'] / rdf['Rest'] 
     
     return rdf
 
 # --- MAIN INTERFACE ---
-st.title("🏸 HPSI Badminton Analytics- PDF Report Generation")
+st.title("HPSI Badminton Analytics- PDF Report Generation")
 
 with st.sidebar:
     st.header("Match Metadata")
@@ -243,7 +244,6 @@ if uploaded_file:
         pdf.quick_table(["Metric", "Value"], overall_table, [80, 60])
 
         # --- 3. PLAYER MATCH SUMMARY ---
-        pdf.add_page()
         pdf.section_title("Player Match Summary")
         
         def get_p_stats(side):
@@ -492,7 +492,7 @@ if uploaded_file:
                 ]
                 pdf.set_font("Arial", 'B', 11)
                 pdf.cell(0, 10, f"Load Statistics (Rest Intervals Excluded) - {clean_set_title}", ln=True)
-                pdf.quick_table(["Metric", "Max (Intense)", "Min (Intense)", "Mean"], load_rows, [50, 35, 35, 30])
+                pdf.quick_table(["Metric", "Max", "Min", "Mean"], load_rows, [50, 35, 35, 30])
             
             # --- B. POINT PROGRESSION PLOT ---
             # Normalize timestamps so each set starts at 0:00
@@ -543,7 +543,7 @@ if uploaded_file:
         set_totals = rdf.groupby('Set').size().to_dict()
         toughest_df = rdf[rdf['Ratio'].notna()].copy()
         
-        top_10 = toughest_df.sort_values('Ratio', ascending=True).head(10).reset_index(drop=True)
+        top_10 = toughest_df.sort_values('Ratio', ascending=False).head(10).reset_index(drop=True)
         
         toughest_table_data = []
         for i, row in top_10.iterrows():
@@ -554,10 +554,11 @@ if uploaded_file:
             
         pdf.quick_table(["No.", "Set #", "Rally #", "W:R Ratio", "Work (s)", "Rest (s)", "Score Before"], toughest_table_data, [10, 25, 25, 30, 25, 25, 50])
         pdf.set_font("Arial", 'I', 9)
-        pdf.multi_cell(0, 5, "Note: A smaller W:R ratio represents a higher intensity rally (less rest per unit of work).")
+        pdf.multi_cell(0, 5, "Note: A larger W:R ratio represents a higher intensity rally (more work per unit of rest).")
+
+        pdf.ln(10)
 
         # --- 7. FINAL METHODOLOGY & NOTES ---
-        pdf.add_page()
         pdf.section_title("NOTES: Methodology & Data Assumptions")
         pdf.set_font("Arial", size=10)
         
